@@ -1,0 +1,13 @@
+{
+  "files": [
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "package.json",
+    "priv/static/phoenix_socket_bert.js"
+  ],
+  "main": "./priv/static/phoenix_socket_bert.js",
+  "name": "phoenix_socket_bert",
+  "repository": {},
+  "version": "1.0.0"
+}
