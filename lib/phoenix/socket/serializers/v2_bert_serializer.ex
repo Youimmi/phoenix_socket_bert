@@ -1,8 +1,8 @@
 defmodule Phoenix.Socket.V2.BERTSerializer do
   @moduledoc """
-  A serializer for `Phoenix.Socket` that encodes and decodes messages using BERT (Binary ERlang Term)
+  A serializer for `Phoenix.Socket` that encodes messages using BERT (Binary ERlang Term)
 
-  Fallback to [`Phoenix.Socket.V2.JSONSerializer`](https://github.com/phoenixframework/phoenix/blob/main/lib/phoenix/socket/serializers/v2_json_serializer.ex) for decoding messages that are not BERT encoded
+  Fallback to Phoenix.Socket.V2.JSONSerializer for decoding messages that are not BERT encoded
 
   ## Usage
 

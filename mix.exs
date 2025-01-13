@@ -1,15 +1,16 @@
 defmodule PhoenixSocketBert.MixProject do
   use Mix.Project
 
+  @description "A serializer for `Phoenix.Socket` that encodes and decodes messages using BERT (Binary ERlang Term)"
   @source_url "https://github.com/Youimmi/phoenix_socket_bert"
-  @version "1.0.0"
+  @version "1.0.1"
 
   def project do
     [
       aliases: aliases(),
       app: :phoenix_socket_bert,
       deps: deps(),
-      description: "BERT serializer for Phoenix.Socket",
+      description: @description,
       docs: docs(),
       elixir: "~> 1.15",
       package: package(),

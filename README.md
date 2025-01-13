@@ -1,6 +1,6 @@
 # PhoenixSocketBert
 
-Add `Phoenix.Socket.V2.BERTSerializer` to your Phoenix application
+A serializer for `Phoenix.Socket` that encodes messages using BERT (Binary ERlang Term)
 
 [![Hex.pm](https://img.shields.io/hexpm/v/phoenix_socket_bert.svg)](https://hex.pm/packages/phoenix_socket_bert) [![Documentation](https://img.shields.io/badge/documentation-gray)](https://hexdocs.pm/phoenix_socket_bert)
 
