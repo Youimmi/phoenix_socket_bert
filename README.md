@@ -67,6 +67,12 @@ $ git clone https://github.com/Youimmi/phoenix_socket_bert.git
 $ cd phoenix_socket_bert
 ```
 
+## Refs
+
+This package is based on the excellent example https://github.com/zookzook/binary_ws by [zookzook (Michael Maier)](https://github.com/zookzook)
+
+Related to the discussion: https://github.com/phoenixframework/phoenix_live_view/issues/616
+
 ## Copyright and License
 
 **PhoenixSocketBert** is released under [the MIT License](./LICENSE)
