@@ -51,7 +51,6 @@ defmodule Phoenix.Socket.V2.BERTSerializer do
   defdelegate decode!(raw_message, opts), to: JSONSerializer
 
   @impl true
-
   def encode!(%Message{payload: %{}} = msg) do
     data = [msg.join_ref, msg.ref, msg.topic, msg.event, msg.payload]
     {:socket_push, :binary, :erlang.term_to_binary(data)}
