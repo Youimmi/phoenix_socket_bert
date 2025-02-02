@@ -8,9 +8,9 @@ export const decode = (buffer) => {
 
   const read = {
     uint8: () => data[index++],
-    uint16: () => (index += 2, (data[index - 2] << 8) | data[index - 1]),
-    uint32: () => (index += 4, (data[index - 4] << 24) | (data[index - 3] << 16) | (data[index - 2] << 8) | data[index - 1]),
-    slice: (length) => (index += length, data.slice(index - length, index)),
+    uint16: () => (data[index++] << 8) | data[index++],
+    uint32: () => (data[index++] << 24) | (data[index++] << 16) | (data[index++] << 8) | data[index++],
+    slice: (length) => data.slice(index, index += length),
   }
 
   if (read.uint8() !== 131) throw new Error('Invalid BERT format')
@@ -18,15 +18,19 @@ export const decode = (buffer) => {
   const decodeBignum = (size) => {
     const sign = read.uint8()
     let result = 0
-    for (let i = 0; i < size; i++) result = (result << 8) | data[index + i]
-    index += size
+    for (let i = 0; i < size; i++) result = (result << 8) | data[index++]
     return sign === 0 ? result : -result
   }
 
-  const decodeTuple = (size) => Array.from({ length: size }, decodeType)
+  const decodeTuple = (size) => {
+    const result = new Array(size)
+    for (let i = 0; i < size; i++) result[i] = decodeType()
+    return result
+  }
 
   const decodeList = (size) => {
-    const result = Array.from({ length: size }, decodeType)
+    const result = new Array(size)
+    for (let i = 0; i < size; i++) result[i] = decodeType()
     decodeType()
     return result
   }
@@ -44,7 +48,7 @@ export const decode = (buffer) => {
     switch (type) {
       case 80: return read.slice(read.uint16())
       case 97: return read.uint8()
-      case 98: return (index += 4, new DataView(buffer, index - 4, 4).getInt32(0))
+      case 98: return new DataView(buffer, index, 4).getInt32(0, (index += 4, true))
       case 100: return utf8.decode(read.slice(read.uint16()))
       case 104: return decodeTuple(read.uint8())
       case 105: return decodeTuple(read.uint32())
