@@ -3,7 +3,7 @@ defmodule PhoenixSocketBert.MixProject do
 
   @description "A serializer for `Phoenix.Socket` that encodes and decodes messages using BERT (Binary ERlang Term)"
   @source_url "https://github.com/Youimmi/phoenix_socket_bert"
-  @version "1.0.3"
+  @version "1.0.4"
 
   def project do
     [
@@ -55,7 +55,7 @@ defmodule PhoenixSocketBert.MixProject do
       files: ~w(CHANGELOG.md LICENSE README.md lib mix.exs package.json priv),
       licenses: ["MIT"],
       links: %{
-        Changelog: "https://hexdocs.pm/phoenix_html/changelog.html",
+        Changelog: "https://hexdocs.pm/phoenix_socket_bert/changelog.html",
         GitHub: @source_url,
         Youimmi: "https://youimmi.com"
       },
