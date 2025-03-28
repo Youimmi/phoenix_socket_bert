@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.5 (2025-03-28)
+
+* Enhancements
+
+  * Update mix.lock
+
 ## 1.0.4 (2024-02-06)
 
 * Bug fixes

@@ -9,5 +9,5 @@
   "main": "./priv/static/phoenix_socket_bert.js",
   "name": "phoenix_socket_bert",
   "repository": {},
-  "version": "1.0.4"
+  "version": "1.0.5"
 }
