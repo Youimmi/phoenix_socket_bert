@@ -3,7 +3,7 @@ defmodule PhoenixSocketBert.MixProject do
 
   @description "A serializer for `Phoenix.Socket` that encodes and decodes messages using BERT (Binary ERlang Term)"
   @source_url "https://github.com/Youimmi/phoenix_socket_bert"
-  @version "1.0.5"
+  @version "1.0.6"
 
   def project do
     [
@@ -28,7 +28,7 @@ defmodule PhoenixSocketBert.MixProject do
         "compile --warnings-as-errors",
         "format --check-formatted --dry-run"
       ],
-      setup: ["deps.get"],
+      setup: ["deps.get", "package_json"],
       upgrade: ["cmd rm -rf _build deps mix.lock", "setup"]
     ]
   end

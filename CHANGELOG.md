@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.6 (2025-05-11)
+
+* Enhancements
+
+  * Update mix.lock
+  * Sync package.json version with `MixProject` version
+
 ## 1.0.5 (2025-03-28)
 
 * Enhancements
