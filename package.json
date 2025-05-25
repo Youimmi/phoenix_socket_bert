@@ -1,4 +1,10 @@
 {
+  "name": "phoenix_socket_bert",
+  "version": "1.0.7",
+  "description": "BERT serializer for Phoenix.Socket.",
+  "license": "MIT",
+  "main": "./priv/static/phoenix_socket_bert.js",
+  "author": "Yuri S. <fudoshiki.ari@gmail.com>",
   "files": [
     "CHANGELOG.md",
     "LICENSE",
@@ -6,8 +12,11 @@
     "package.json",
     "priv/static/phoenix_socket_bert.js"
   ],
-  "main": "./priv/static/phoenix_socket_bert.js",
-  "name": "phoenix_socket_bert",
-  "repository": {},
-  "version": "1.0.6"
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Youimmi/phoenix_socket_bert.git"
+  },
+  "dependencies": {
+    "phoenix": ">= 1.7.0"
+  }
 }
