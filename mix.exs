@@ -3,7 +3,7 @@ defmodule PhoenixSocketBert.MixProject do
 
   @description "A serializer for `Phoenix.Socket` that encodes and decodes messages using BERT (Binary ERlang Term)"
   @source_url "https://github.com/Youimmi/phoenix_socket_bert"
-  @version "1.0.7"
+  @version "1.0.8"
 
   def project do
     [
@@ -36,7 +36,7 @@ defmodule PhoenixSocketBert.MixProject do
   defp deps do
     [
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
-      {:phoenix, "~> 1.7", optional: true}
+      {:phoenix, ">= 1.7.0", optional: true}
     ]
   end
 
