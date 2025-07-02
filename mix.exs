@@ -1,7 +1,7 @@
 defmodule PhoenixSocketBert.MixProject do
   use Mix.Project
 
-  @description "A serializer for `Phoenix.Socket` that encodes and decodes messages using BERT (Binary ERlang Term)"
+  @description "A serializer for Phoenix.Socket that encodes and decodes messages using BERT (Binary ERlang Term)"
   @source_url "https://github.com/Youimmi/phoenix_socket_bert"
   @version "1.0.10"
 
