@@ -1,6 +1,6 @@
 {
   "name": "phoenix_socket_bert",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "BERT serializer for Phoenix.Socket.",
   "license": "MIT",
   "main": "./priv/static/phoenix_socket_bert.js",
