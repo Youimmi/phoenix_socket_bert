@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.12 (2025-08-07)
+
+### Enhancements
+
+- Update mix.lock
+
+## 1.0.11 (2025-07-02)
+
+### Enhancements
+
+- Remove backquotes from description
+- Update mix.lock
+
+## 1.0.10 (2025-06-28)
+
+### Enhancements
+
+- Fix integer big-endian format
+- ESLint format
+
 ## 1.0.9 (2025-06-10)
 
 ### Enhancements
