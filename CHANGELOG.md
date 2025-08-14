@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.1.0 (2025-08-14)
+
+### Enhancements
+
+- Simplify JS ETF decoder (spec-aligned, smaller code)
+- Correct big integer decoding (little-endian + overflow guard)
+- Add UTF-8 atoms (118/119), STRING_EXT (107), proper LIST_EXT tail handling
+- Manual NEW_FLOAT_EXT parse (faster, no DataView)
+
+### Deprecations
+
+- Remove broken COMPRESSED (80) placeholder path
+
 ## 1.0.12 (2025-08-07)
 
 ### Enhancements
