@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1 (2025-08-23)
+
+### Enhancements
+
+- Update mix.lock
+
 ## 1.1.0 (2025-08-14)
 
 ### Enhancements
