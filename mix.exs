@@ -36,7 +36,7 @@ defmodule PhoenixSocketBert.MixProject do
   defp deps do
     [
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
-      {:phoenix, ">= 1.7.0", optional: true}
+      {:phoenix, ">= 1.8.1", optional: true}
     ]
   end
 

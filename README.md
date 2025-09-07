@@ -11,7 +11,7 @@ Add `phoenix_socket_bert` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:phoenix_socket_bert, "~> 1.0"}
+    {:phoenix_socket_bert, "~> 1.1"}
   ]
 end
 ```
@@ -41,21 +41,28 @@ Import the `phoenix_socket_bert` in your app.js and add `decode` option to the `
 **app.js**
 
 ```javascript
-import { decode } from 'phoenix_socket_bert'
-import { LiveSocket } from 'phoenix_live_view'
-import { Socket } from 'phoenix'
+import { decode } from "phoenix_socket_bert";
+import { LiveSocket } from "phoenix_live_view";
+import { Socket } from "phoenix";
 
-let csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-let liveSocket = new LiveSocket('/live', Socket, {
+let csrfToken = document
+  .querySelector('meta[name="csrf-token"]')
+  .getAttribute("content");
+
+let liveSocket = new LiveSocket("/live", Socket, {
   decode: decode,
   longPollFallbackMs: 2500,
-  params: { _csrf_token: csrfToken }
-})
+  params: { _csrf_token: csrfToken },
+});
 
-liveSocket.connect()
+liveSocket.connect();
 
-let socket = new Socket("/socket", { decode: decode, params: { token: csrfToken } })
-socket.connect()
+let socket = new Socket("/socket", {
+  decode: decode,
+  params: { token: csrfToken },
+});
+
+socket.connect();
 ```
 
 ## Contributing
