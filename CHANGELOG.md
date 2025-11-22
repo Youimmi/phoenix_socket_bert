@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0 (2025-11-22)
+
+### Deprecations
+
+- Remove Fallback to Phoenix default decoder
+
 ## 1.1.3 (2025-11-06)
 
 ### Enhancements
