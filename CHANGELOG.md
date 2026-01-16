@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1 (2026-01-16)
+
+### Enhancements
+
+- Update mix.lock
+
 ## 1.2.0 (2025-11-22)
 
 ### Deprecations
