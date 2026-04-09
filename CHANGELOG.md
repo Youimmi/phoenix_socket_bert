@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add mise.toml
+
 ## 1.2.6 (2026-03-15)
 
 ### Enhancements
@@ -10,7 +14,6 @@
 
 ### Enhancements
 
-- Update .tool-versions
 - Update mix.lock
 
 ## 1.2.4 (2026-03-02)
