@@ -6,16 +6,20 @@ try {
 
 export const decode = (buffer) => {
   const data = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   let index = 0;
   const read = {
     u8: () => data[index++],
-    u16: () => (data[index++] << 8) | data[index++],
-    u32: () =>
-      ((data[index++] << 24) |
-        (data[index++] << 16) |
-        (data[index++] << 8) |
-        data[index++]) >>>
-      0,
+    u16: () => {
+      const v = view.getUint16(index, false);
+      index += 2;
+      return v;
+    },
+    u32: () => {
+      const v = view.getUint32(index, false);
+      index += 4;
+      return v;
+    },
     slice: (len) => data.subarray(index, (index += len)),
   };
   if (read.u8() !== 131) throw new Error("Invalid BERT format");
@@ -70,34 +74,9 @@ export const decode = (buffer) => {
     return m;
   };
   const decodeFloat = () => {
-    const b0 = data[index++],
-      b1 = data[index++],
-      b2 = data[index++],
-      b3 = data[index++],
-      b4 = data[index++],
-      b5 = data[index++],
-      b6 = data[index++],
-      b7 = data[index++];
-    const sign = b0 >> 7;
-    const exp = ((b0 & 0x7f) << 4) | (b1 >> 4);
-    let mantissa =
-      (b1 & 0x0f) * 0x1000000000000 +
-      b2 * 0x10000000000 +
-      b3 * 0x100000000 +
-      b4 * 0x1000000 +
-      b5 * 0x10000 +
-      b6 * 0x100 +
-      b7;
-    if (exp === 0) {
-      if (mantissa === 0) return sign ? -0 : 0;
-      return (sign ? -1 : 1) * mantissa * Math.pow(2, -1074);
-    }
-    if (exp === 0x7ff) return mantissa ? NaN : sign ? -Infinity : Infinity;
-    return (
-      (sign ? -1 : 1) *
-      (1 + mantissa / 0x10000000000000) *
-      Math.pow(2, exp - 1023)
-    );
+    const v = view.getFloat64(index, false);
+    index += 8;
+    return v;
   };
 
   const decodeType = () => {

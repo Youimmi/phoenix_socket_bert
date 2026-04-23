@@ -53,26 +53,31 @@ defmodule Phoenix.Socket.V2.BERTSerializer do
   @impl true
   def encode!(%Message{payload: %{}} = msg) do
     data = [msg.join_ref, msg.ref, msg.topic, msg.event, msg.payload]
-    {:socket_push, :binary, :erlang.term_to_binary(data)}
+    {:socket_push, :binary, :erlang.term_to_binary(data, [{:minor_version, 2}])}
   end
 
   def encode!(%Reply{} = reply) do
-    data = [
-      reply.join_ref,
-      reply.ref,
-      reply.topic,
-      "phx_reply",
-      %{response: reply.payload, status: reply.status}
-    ]
+    data =
+      [
+        reply.join_ref,
+        reply.ref,
+        reply.topic,
+        "phx_reply",
+        %{response: reply.payload, status: reply.status}
+      ]
+      |> :erlang.term_to_binary([{:minor_version, 2}])
 
-    {:socket_push, :binary, :erlang.term_to_binary(data)}
+    {:socket_push, :binary, data}
   end
 
   defdelegate encode!(msg), to: JSONSerializer
 
   @impl true
   def fastlane!(%Broadcast{payload: %{}} = msg) do
-    data = :erlang.term_to_binary([nil, nil, msg.topic, msg.event, msg.payload])
+    data =
+      [nil, nil, msg.topic, msg.event, msg.payload]
+      |> :erlang.term_to_binary([{:minor_version, 2}])
+
     {:socket_push, :binary, data}
   end
 
