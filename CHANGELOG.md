@@ -1,8 +1,14 @@
 # Changelog
 
-## Unreleased
+## 1.3.0 (2026-04-23)
+
+## Added
 
 - Add mise.toml
+
+### Enhancements
+
+- Enhance BERT serialization
 
 ## 1.2.6 (2026-03-15)
 
