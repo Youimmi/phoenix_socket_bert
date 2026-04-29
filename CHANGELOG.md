@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.5 (2026-05-24)
+
+### Enhancements
+
+- Update mix.lock
+- Remove useless package.json task
+
 ## 1.3.4 (2026-05-16)
 
 ### Enhancements
