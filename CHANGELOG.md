@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.1 (2026-04-29)
+
+### Enhancements
+
+- Fix 1.3.0 atom encoding regression (100/115/118/119)
+
 ## 1.3.0 (2026-04-23)
 
 ## Added
