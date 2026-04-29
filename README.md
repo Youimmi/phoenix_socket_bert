@@ -11,7 +11,7 @@ Add `phoenix_socket_bert` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:phoenix_socket_bert, "~> 1.2"}
+    {:phoenix_socket_bert, "~> 1.3"}
   ]
 end
 ```

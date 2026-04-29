@@ -56,6 +56,8 @@ defmodule Phoenix.Socket.V2.BERTSerializer do
     {:socket_push, :binary, :erlang.term_to_binary(data, [{:minor_version, 2}])}
   end
 
+  def encode!(%Reply{payload: {:binary, _}} = reply), do: JSONSerializer.encode!(reply)
+
   def encode!(%Reply{} = reply) do
     data =
       [

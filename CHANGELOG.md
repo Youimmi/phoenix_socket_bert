@@ -1,8 +1,14 @@
 # Changelog
 
-## 1.3.1 (2026-04-29)
+## 1.3.2 (2026-04-29)
 
 ### Enhancements
+
+- Inline BERT decoder with Phoenix binary fallback
+
+## 1.3.1 (2026-04-29)
+
+### Bug fixes
 
 - Fix 1.3.0 atom encoding regression (100/115/118/119)
 
