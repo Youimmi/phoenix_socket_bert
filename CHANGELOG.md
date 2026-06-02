@@ -1,11 +1,18 @@
 # Changelog
 
+## 1.3.6 (2026-06-02)
+
+### Enhancements
+
+- Update mise.toml
+- Fix the task "package_json" could not be found` error in mix.exs
+
 ## 1.3.5 (2026-05-24)
 
 ### Enhancements
 
 - Update mix.lock
-- Remove useless package.json task
+- Remove useless `mix package_json` task
 
 ## 1.3.4 (2026-05-16)
 
