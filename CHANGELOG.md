@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.7 (2026-06-11)
+
+### Enhancements
+
+- Update mise.toml
+- Update mix.lock
+
 ## 1.3.6 (2026-06-02)
 
 ### Enhancements
