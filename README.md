@@ -1,6 +1,6 @@
 # PhoenixSocketBert
 
-A serializer for `Phoenix.Socket` that encodes messages using BERT (Binary ERlang Term)
+A serializer for `Phoenix.Socket` that encodes server-to-client messages using BERT (Binary ERlang Term). Client-to-server messages keep Phoenix's standard JSON and binary frame formats.
 
 [![Hex.pm](https://img.shields.io/hexpm/v/phoenix_socket_bert.svg)](https://hex.pm/packages/phoenix_socket_bert) [![Documentation](https://img.shields.io/badge/documentation-gray)](https://hexdocs.pm/phoenix_socket_bert)
 
@@ -64,6 +64,19 @@ let socket = new Socket("/socket", {
 
 socket.connect();
 ```
+
+## Security Concerns
+
+BERT is based on Erlang's external term format, which can represent terms that
+should never be accepted from an untrusted client. For that reason this package
+uses BERT only for server-to-client messages: Phoenix encodes outbound map
+payloads with `:erlang.term_to_binary/2`, and the browser decodes them with the
+JavaScript `decode` function.
+
+Client-to-server messages continue to use Phoenix's standard JSON and binary
+frame formats, decoded by `Phoenix.Socket.V2.JSONSerializer`. Do not configure
+clients to send BERT terms back to the server, and do not add server-side
+`binary_to_term` decoding for untrusted websocket input.
 
 ## Contributing
 
