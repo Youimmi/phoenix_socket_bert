@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.0.0 (2026-08-07)
+
+### Breaking changes
+
+- Encode server messages as fixed five-element ETF tuples
+- Remove server-to-client JSON, Phoenix binary, and long-poll fallbacks
+- Restrict payloads to the documented ETF subset
+- Target the Phoenix 1.8 WebSocket transport profile
+
+### Enhancements
+
+- Decode tuple fields directly without an intermediate array
+- Reduce JavaScript branches, allocations, helpers, and metadata
+
 ## 1.3.9 (2026-07-30)
 
 ### Enhancements

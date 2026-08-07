@@ -3,8 +3,11 @@ defmodule Phoenix.Socket.V2.BERTSerializer do
   A serializer for `Phoenix.Socket` that encodes server-to-client messages using
   BERT (Binary ERlang Term)
 
-  Client-to-server messages are decoded by `Phoenix.Socket.V2.JSONSerializer`,
-  preserving Phoenix's standard JSON and binary frame formats.
+  Client-to-server messages use Phoenix's JSON and binary frame formats.
+
+  Server payloads may contain floats, JavaScript-safe integers, UTF-8 binaries,
+  small UTF-8 atoms, proper lists, byte lists, small tuples, and maps. Binary
+  replies and other Erlang terms are not supported.
 
   ## Usage
 
@@ -13,7 +16,6 @@ defmodule Phoenix.Socket.V2.BERTSerializer do
     **endpoint.ex**
 
       socket "/live", Phoenix.LiveView.Socket,
-        longpoll: [connect_info: [session: @session_options]],
         websocket: [
           connect_info: [session: @session_options],
           serializer: [{Phoenix.Socket.V2.BERTSerializer, "~> 2.0.0"}]
@@ -35,7 +37,6 @@ defmodule Phoenix.Socket.V2.BERTSerializer do
       let csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content')
       let liveSocket = new LiveSocket('/live', Socket, {
         decode: decode,
-        longPollFallbackMs: 2500,
         params: { _csrf_token: csrfToken }
       })
 
@@ -54,36 +55,25 @@ defmodule Phoenix.Socket.V2.BERTSerializer do
 
   @impl true
   def encode!(%Message{payload: %{}} = msg) do
-    data = [msg.join_ref, msg.ref, msg.topic, msg.event, msg.payload]
-    {:socket_push, :binary, :erlang.term_to_binary(data, [{:minor_version, 2}])}
+    {:socket_push, :binary,
+     :erlang.term_to_binary(
+       {msg.join_ref, msg.ref, msg.topic, msg.event, msg.payload},
+       minor_version: 2
+     )}
   end
 
-  def encode!(%Reply{payload: {:binary, _}} = reply), do: JSONSerializer.encode!(reply)
-
-  def encode!(%Reply{} = reply) do
-    data =
-      [
-        reply.join_ref,
-        reply.ref,
-        reply.topic,
-        "phx_reply",
-        %{response: reply.payload, status: reply.status}
-      ]
-      |> :erlang.term_to_binary([{:minor_version, 2}])
-
-    {:socket_push, :binary, data}
+  def encode!(%Reply{payload: %{}} = reply) do
+    {:socket_push, :binary,
+     :erlang.term_to_binary(
+       {reply.join_ref, reply.ref, reply.topic, "phx_reply",
+        %{response: reply.payload, status: reply.status}},
+       minor_version: 2
+     )}
   end
-
-  defdelegate encode!(msg), to: JSONSerializer
 
   @impl true
   def fastlane!(%Broadcast{payload: %{}} = msg) do
-    data =
-      [nil, nil, msg.topic, msg.event, msg.payload]
-      |> :erlang.term_to_binary([{:minor_version, 2}])
-
-    {:socket_push, :binary, data}
+    {:socket_push, :binary,
+     :erlang.term_to_binary({nil, nil, msg.topic, msg.event, msg.payload}, minor_version: 2)}
   end
-
-  defdelegate fastlane!(raw_message), to: JSONSerializer
 end
