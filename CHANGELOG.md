@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.0.1 (2026-09-28)
+
+### Bug fixes
+
+- Preserve `__proto__` map keys without changing decoded object prototypes
+
+### Enhancements
+
+- Decode float-heavy lists and short ASCII binaries faster
+- Update dependencies
+
 ## 2.0.0 (2026-08-07)
 
 ### Breaking changes

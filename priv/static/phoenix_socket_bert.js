@@ -62,7 +62,14 @@ const term = () => {
     }
     case 108: {
       const arr = new Array(readUint32());
-      for (let i = 0; i < arr.length; i++) arr[i] = term();
+      // Avoid recursive dispatch for float-heavy lists.
+      for (let i = 0; i < arr.length; i++) {
+        if (termData[termIndex] === 70) {
+          if (termView === null) termView = new DataView(termData.buffer);
+          arr[i] = termView.getFloat64(termIndex + 1, false);
+          termIndex += 9;
+        } else arr[i] = term();
+      }
       termIndex++;
       return arr;
     }
@@ -70,6 +77,16 @@ const term = () => {
       const len = readUint32();
       const i = termIndex;
       termIndex += len;
+      // Avoid TextDecoder overhead for short ASCII strings.
+      if (len <= 32) {
+        let value = "";
+        for (let j = i; j < termIndex; j++) {
+          if (termData[j] > 127)
+            return decoder.decode(termData.subarray(i, termIndex));
+          value += String.fromCharCode(termData[j]);
+        }
+        return value;
+      }
       return decoder.decode(termData.subarray(i, termIndex));
     }
     case 110: {
@@ -88,7 +105,20 @@ const term = () => {
     case 116: {
       let size = readUint32();
       const obj = {};
-      while (size--) obj[term()] = term();
+      while (size--) {
+        const key = term();
+        const value = term();
+        if (key === "__proto__") {
+          Object.defineProperty(obj, key, {
+            value,
+            writable: true,
+            enumerable: true,
+            configurable: true,
+          });
+        } else {
+          obj[key] = value;
+        }
+      }
       return obj;
     }
     case 119: {
