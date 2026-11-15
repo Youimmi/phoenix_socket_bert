@@ -1,5 +1,24 @@
 # Changelog
 
+## 3.0.0 (2026-11-15)
+
+### Breaking changes
+
+- Limit frames to 2 MiB, 262,144 terms, 65,536 collection elements, and nesting depth 64; the serializer raises `ArgumentError` for frames larger than 2 MiB before encoding them
+- Reject payloads outside the documented ETF subset in the JavaScript decoder, including invalid UTF-8, unsafe JavaScript integers, non-finite floats, and improper lists
+
+### Bug fixes
+
+- Reject truncated, oversized, malformed, and trailing-data frames in the JavaScript decoder
+
+### Enhancements
+
+- Add compile-time `config :phoenix_socket_bert, validate: true` to check payloads on the server before encoding, including map keys that become the same JavaScript property name
+- Add an optional `onError` callback to `decode` for parsing failures; callback exceptions still propagate
+- Decode float-heavy lists inline and release frame buffers after decoding
+- Recommend per-message compression in the socket configuration
+- Update dependencies
+
 ## 2.0.1 (2026-09-28)
 
 ### Bug fixes

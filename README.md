@@ -11,7 +11,7 @@ Add `phoenix_socket_bert` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:phoenix_socket_bert, "~> 2.0"}
+    {:phoenix_socket_bert, "~> 3.0"}
   ]
 end
 ```
@@ -25,12 +25,14 @@ Set the `:serializer` option in your `Phoenix.Socket` configuration:
 ```elixir
 socket "/live", Phoenix.LiveView.Socket,
   websocket: [
+    compress: true,
     connect_info: [session: @session_options],
     serializer: [{Phoenix.Socket.V2.BERTSerializer, "~> 2.0.0"}]
   ]
 
 socket "/socket", Phoenix.Socket,
   websocket: [
+    compress: true,
     serializer: [{Phoenix.Socket.V2.BERTSerializer, "~> 2.0.0"}]
   ]
 ```
@@ -66,18 +68,36 @@ socket.connect();
 ## Wire format
 
 Server messages are five-element ETF tuples containing `join_ref`, `ref`,
-`topic`, `event`, and `payload`. The JavaScript decoder accepts only
-`ArrayBuffer` messages using this format.
+`topic`, `event`, and `payload`. The JavaScript decoder accepts `ArrayBuffer`
+messages and typed array views using this format.
 
 Payloads may contain floats, JavaScript-safe integers, UTF-8 binaries, small
 UTF-8 atoms, proper lists, byte lists, tuples with at most 255 elements, and
-maps. Use either atom keys or UTF-8 binary keys consistently within a map.
+maps with atom, UTF-8 binary, or integer keys. Keys that become the same
+JavaScript property name, such as `:a` and `"a"`, overwrite each other.
 Binary replies, bitstrings, improper lists, and other Erlang terms are not
 supported.
 
+Frames are limited to 2 MiB, 262,144 terms, 65,536 elements per collection,
+and nesting depth 64. The serializer raises `ArgumentError` for frames larger
+than 2 MiB, and the decoder rejects frames outside these rules. Pass an optional
+third `onError` argument to `decode` to handle parsing failures; exceptions from
+the message callback still propagate.
+
+To check every payload on the server before encoding, enable validation at
+compile time, typically in development and test. It traverses each payload and
+raises `ArgumentError` for terms outside these rules:
+
+```elixir
+config :phoenix_socket_bert, validate: true
+```
+
+Enable `compress: true` on the socket: per-message deflate typically reduces
+LiveView frames several times.
+
 ## Compatibility
 
-Version 2.0 targets Phoenix 1.8 WebSockets using transport protocol 2.0.0 and
+Version 3.0 targets Phoenix 1.8 WebSockets using transport protocol 2.0.0 and
 the default `ArrayBuffer` binary type. It does not support LongPoll, custom
 binary types, or Phoenix `{:binary, data}` server payloads. The serializer
 requirement `"~> 2.0.0"` in the socket configuration selects Phoenix's transport

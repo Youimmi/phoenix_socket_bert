@@ -1,165 +1,188 @@
-const decoder = new TextDecoder();
+const decoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
 
-let termData;
-let termIndex;
-let termView;
+let data = null;
+let view = null;
+let index = 0;
+let terms = 0;
 
-export const decode = (rawPayload, callback) => {
-  termData = new Uint8Array(rawPayload);
-  termIndex = 3;
-  termView = null;
-
-  const message = {
-    join_ref: term(),
-    ref: term(),
-    topic: term(),
-    event: term(),
-    payload: term(),
-  };
-
-  termData = termView = null;
-  return callback(message);
+const fail = (message) => {
+  throw new Error(message);
 };
 
-const readUint32 = () => {
-  const value =
-    termData[termIndex] * 0x1000000 +
-    (termData[termIndex + 1] << 16) +
-    (termData[termIndex + 2] << 8) +
-    termData[termIndex + 3];
-  termIndex += 4;
+const take = (size) => {
+  const start = index;
+  if (size > data.length - start) fail("Truncated BERT frame");
+  index = start + size;
+  return start;
+};
+
+const text = (size) => {
+  const start = take(size);
+  const end = start + size;
+  if (size <= 32) {
+    let value = "";
+    for (let i = start; i < end; i++) {
+      const byte = data[i];
+      if (byte > 127) return decoder.decode(data.subarray(start, end));
+      value += String.fromCharCode(byte);
+    }
+    return value;
+  }
+  return decoder.decode(data.subarray(start, end));
+};
+
+const limit = (size, depth, count) => {
+  if (size > 65536 || count > terms || (size > 0 && depth >= 64)) fail("BERT collection limit exceeded");
+  if (count > data.length - index) fail("Truncated BERT collection");
+};
+
+const float = (at) => {
+  const value = view.getFloat64(at, false);
+  if (!Number.isFinite(value)) fail("Invalid BERT float");
   return value;
 };
 
-const term = () => {
-  switch (termData[termIndex++]) {
-    case 70: {
-      if (termView === null) termView = new DataView(termData.buffer);
-      const value = termView.getFloat64(termIndex, false);
-      termIndex += 8;
-      return value;
-    }
+const array = (size, depth) => {
+  limit(size, depth, size);
+  const values = new Array(size);
+  const next = depth + 1;
+  for (let i = 0; i < size; i++) {
+    // Decode floats inline: numeric arrays are common and dominate recursive dispatch.
+    if (data[index] === 70 && next <= 64 && terms > 0 && index + 9 <= data.length) {
+      terms--;
+      values[i] = float(index + 1);
+      index += 9;
+    } else values[i] = term(next);
+  }
+  return values;
+};
+
+const key = (depth) => {
+  if (depth > 64 || terms-- <= 0) fail("BERT term limit exceeded");
+  switch (data[take(1)]) {
     case 97:
-      return termData[termIndex++];
-    case 98: {
-      const value = readUint32();
-      return value >= 0x80000000 ? value - 0x100000000 : value;
-    }
-    case 104: {
-      const arr = new Array(termData[termIndex++]);
-      for (let i = 0; i < arr.length; i++) arr[i] = term();
-      return arr;
-    }
+      return data[take(1)];
+    case 98:
+      return view.getInt32(take(4), false);
+    case 109:
+      return text(view.getUint32(take(4), false));
+    case 110:
+      return big();
+    case 119:
+      return text(data[take(1)]);
+    default:
+      return fail("Unsupported BERT map key");
+  }
+};
+
+const big = () => {
+  const size = data[take(1)];
+  const sign = data[take(1)];
+  if (sign > 1) fail("Invalid BERT integer sign");
+  const start = take(size);
+  let value = 0;
+  for (let i = start + size - 1; i >= start; i--) {
+    value = value * 256 + data[i];
+    if (!Number.isSafeInteger(value)) fail("Integer exceeds safe Number range");
+  }
+  return sign ? -value : value;
+};
+
+const term = (depth) => {
+  if (depth > 64 || terms-- <= 0) fail("BERT term limit exceeded");
+  const tag = data[take(1)];
+  switch (tag) {
+    case 70:
+      return float(take(8));
+    case 97:
+      return data[take(1)];
+    case 98:
+      return view.getInt32(take(4), false);
+    case 104:
+      return array(data[take(1)], depth);
     case 106:
       return [];
     case 107: {
-      const arr = new Array(
-        (termData[termIndex] << 8) | termData[termIndex + 1],
-      );
-      termIndex += 2;
-      for (let i = 0; i < arr.length; i++) arr[i] = termData[termIndex++];
-      return arr;
+      const size = view.getUint16(take(2), false);
+      limit(size, depth, size);
+      terms -= size;
+      const start = take(size);
+      const values = new Array(size);
+      for (let i = 0; i < size; i++) values[i] = data[start + i];
+      return values;
     }
     case 108: {
-      const arr = new Array(readUint32());
-      // Avoid recursive dispatch for float-heavy lists.
-      for (let i = 0; i < arr.length; i++) {
-        if (termData[termIndex] === 70) {
-          if (termView === null) termView = new DataView(termData.buffer);
-          arr[i] = termView.getFloat64(termIndex + 1, false);
-          termIndex += 9;
-        } else arr[i] = term();
-      }
-      termIndex++;
-      return arr;
+      const values = array(view.getUint32(take(4), false), depth);
+      if (data[take(1)] !== 106) fail("Improper BERT list");
+      return values;
     }
-    case 109: {
-      const len = readUint32();
-      const i = termIndex;
-      termIndex += len;
-      // Avoid TextDecoder overhead for short ASCII strings.
-      if (len <= 32) {
-        let value = "";
-        for (let j = i; j < termIndex; j++) {
-          if (termData[j] > 127)
-            return decoder.decode(termData.subarray(i, termIndex));
-          value += String.fromCharCode(termData[j]);
-        }
-        return value;
-      }
-      return decoder.decode(termData.subarray(i, termIndex));
-    }
-    case 110: {
-      let size = termData[termIndex++];
-      const sign = termData[termIndex++];
-      let num = 0;
-      let factor = 1;
-      while (size--) {
-        num += termData[termIndex++] * factor;
-        if (num > Number.MAX_SAFE_INTEGER)
-          throw new Error("Integer exceeds safe Number range");
-        factor *= 256;
-      }
-      return sign ? -num : num;
-    }
+    case 109:
+      return text(view.getUint32(take(4), false));
+    case 110:
+      return big();
     case 116: {
-      let size = readUint32();
-      const obj = {};
-      while (size--) {
-        const key = term();
-        const value = term();
-        if (key === "__proto__") {
-          Object.defineProperty(obj, key, {
-            value,
-            writable: true,
-            enumerable: true,
-            configurable: true,
-          });
-        } else {
-          obj[key] = value;
-        }
+      const size = view.getUint32(take(4), false);
+      limit(size, depth, size * 2);
+      const values = {};
+      const next = depth + 1;
+      for (let i = 0; i < size; i++) {
+        const name = key(next);
+        const value = term(next);
+        if (name === "__proto__")
+          Object.defineProperty(values, name, { value, enumerable: true, configurable: true, writable: true });
+        else values[name] = value;
       }
-      return obj;
+      return values;
     }
     case 119: {
-      const len = termData[termIndex++];
-      const i = termIndex;
-      termIndex += len;
-
-      if (
-        len === 3 &&
-        termData[i] === 110 &&
-        termData[i + 1] === 105 &&
-        termData[i + 2] === 108
-      )
-        return null;
-      if (
-        len === 4 &&
-        termData[i] === 116 &&
-        termData[i + 1] === 114 &&
-        termData[i + 2] === 117 &&
-        termData[i + 3] === 101
-      )
-        return true;
-      if (
-        len === 5 &&
-        termData[i] === 102 &&
-        termData[i + 1] === 97 &&
-        termData[i + 2] === 108 &&
-        termData[i + 3] === 115 &&
-        termData[i + 4] === 101
-      )
-        return false;
-
-      let value = "";
-      for (let j = i; j < termIndex; j++) {
-        if (termData[j] > 127)
-          return decoder.decode(termData.subarray(i, termIndex));
-        value += String.fromCharCode(termData[j]);
-      }
+      const value = text(data[take(1)]);
+      if (value === "nil") return null;
+      if (value === "true") return true;
+      if (value === "false") return false;
       return value;
     }
     default:
-      throw new Error("Unsupported type: " + termData[termIndex - 1]);
+      return fail("Unsupported BERT type: " + tag);
   }
+};
+
+const read = (payload) => {
+  if (payload instanceof ArrayBuffer) data = new Uint8Array(payload);
+  else if (ArrayBuffer.isView(payload)) data = new Uint8Array(payload.buffer, payload.byteOffset, payload.byteLength);
+  else throw new TypeError("Expected a binary BERT frame");
+  if (data.length > 2097152) fail("BERT frame too large");
+  view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  index = 0;
+  terms = 262143; // The five-element message tuple is one term.
+  if (data[take(1)] !== 131 || data[take(1)] !== 104 || data[take(1)] !== 5) fail("Invalid BERT message header");
+  const message = { join_ref: term(1), ref: term(1), topic: term(1), event: term(1), payload: term(1) };
+  if (
+    index !== data.length ||
+    !(message.join_ref === null || typeof message.join_ref === "string") ||
+    !(message.ref === null || typeof message.ref === "string") ||
+    typeof message.topic !== "string" ||
+    typeof message.event !== "string" ||
+    message.payload === null ||
+    typeof message.payload !== "object" ||
+    Array.isArray(message.payload)
+  )
+    fail("Invalid BERT message");
+  return message;
+};
+
+// Only parsing failures go to onError. Exceptions from the consumer must propagate.
+export const decode = (payload, callback, onError) => {
+  let message;
+  let error;
+  let failed = false;
+  try {
+    message = read(payload);
+  } catch (reason) {
+    error = reason;
+    failed = true;
+  }
+  data = view = null;
+  if (!failed) return callback(message);
+  if (!onError) throw error;
+  return onError(error);
 };
