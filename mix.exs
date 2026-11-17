@@ -3,7 +3,7 @@ defmodule PhoenixSocketBert.MixProject do
 
   @description "A serializer for Phoenix.Socket that encodes server-to-client messages using BERT (Binary ERlang Term)"
   @source_url "https://github.com/Youimmi/phoenix_socket_bert"
-  @version "3.0.0"
+  @version "3.1.0"
 
   def project do
     [

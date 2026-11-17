@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.1.0 (2026-11-17)
+
+### Enhancements
+
+- Encode `{:binary, data}` pushes, replies, and broadcasts as Phoenix binary frames with any bytes, limited to 2 MiB per frame
+- Decode Phoenix binary frames in the JavaScript decoder and return their data as an `ArrayBuffer`
+- Raise `ArgumentError` for unsupported payloads instead of `FunctionClauseError`
+
 ## 3.0.0 (2026-11-15)
 
 ### Breaking changes

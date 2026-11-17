@@ -146,15 +146,56 @@ const term = (depth) => {
   }
 };
 
+const rest = () => data.slice(index).buffer;
+
+const frame = (kind) => {
+  switch (kind) {
+    case 0: {
+      const joinRefSize = data[take(1)];
+      const topicSize = data[take(1)];
+      const eventSize = data[take(1)];
+      return {
+        join_ref: text(joinRefSize),
+        ref: null,
+        topic: text(topicSize),
+        event: text(eventSize),
+        payload: rest()
+      };
+    }
+    case 1: {
+      const joinRefSize = data[take(1)];
+      const refSize = data[take(1)];
+      const topicSize = data[take(1)];
+      const statusSize = data[take(1)];
+      return {
+        join_ref: text(joinRefSize),
+        ref: text(refSize),
+        topic: text(topicSize),
+        event: "phx_reply",
+        payload: { status: text(statusSize), response: rest() }
+      };
+    }
+    case 2: {
+      const topicSize = data[take(1)];
+      const eventSize = data[take(1)];
+      return { join_ref: null, ref: null, topic: text(topicSize), event: text(eventSize), payload: rest() };
+    }
+    default:
+      return fail("Invalid binary frame kind");
+  }
+};
+
 const read = (payload) => {
   if (payload instanceof ArrayBuffer) data = new Uint8Array(payload);
   else if (ArrayBuffer.isView(payload)) data = new Uint8Array(payload.buffer, payload.byteOffset, payload.byteLength);
   else throw new TypeError("Expected a binary BERT frame");
   if (data.length > 2097152) fail("BERT frame too large");
-  view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   index = 0;
+  const kind = data[take(1)];
+  if (kind !== 131) return frame(kind);
+  view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   terms = 262143; // The five-element message tuple is one term.
-  if (data[take(1)] !== 131 || data[take(1)] !== 104 || data[take(1)] !== 5) fail("Invalid BERT message header");
+  if (data[take(1)] !== 104 || data[take(1)] !== 5) fail("Invalid BERT message header");
   const message = { join_ref: term(1), ref: term(1), topic: term(1), event: term(1), payload: term(1) };
   if (
     index !== data.length ||

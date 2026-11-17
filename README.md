@@ -67,16 +67,20 @@ socket.connect();
 
 ## Wire format
 
-Server messages are five-element ETF tuples containing `join_ref`, `ref`,
-`topic`, `event`, and `payload`. The JavaScript decoder accepts `ArrayBuffer`
-messages and typed array views using this format.
+Server messages with map payloads are five-element ETF tuples containing
+`join_ref`, `ref`, `topic`, `event`, and `payload`. The JavaScript decoder
+accepts `ArrayBuffer` messages and typed array views using this format.
 
 Payloads may contain floats, JavaScript-safe integers, UTF-8 binaries, small
 UTF-8 atoms, proper lists, byte lists, tuples with at most 255 elements, and
 maps with atom, UTF-8 binary, or integer keys. Keys that become the same
 JavaScript property name, such as `:a` and `"a"`, overwrite each other.
-Binary replies, bitstrings, improper lists, and other Erlang terms are not
-supported.
+Bitstrings, improper lists, and other Erlang terms are not supported.
+
+`{:binary, data}` pushes, replies, and broadcasts use Phoenix's binary frame
+format and may carry any bytes; their topic, event, and refs must be UTF-8. The
+decoder returns their data as an `ArrayBuffer` (for replies, in
+`payload.response`), like Phoenix's own serializer.
 
 Frames are limited to 2 MiB, 262,144 terms, 65,536 elements per collection,
 and nesting depth 64. The serializer raises `ArgumentError` for frames larger
@@ -97,11 +101,11 @@ LiveView frames several times.
 
 ## Compatibility
 
-Version 3.0 targets Phoenix 1.8 WebSockets using transport protocol 2.0.0 and
-the default `ArrayBuffer` binary type. It does not support LongPoll, custom
-binary types, or Phoenix `{:binary, data}` server payloads. The serializer
-requirement `"~> 2.0.0"` in the socket configuration selects Phoenix's transport
-protocol; it is independent of this package's version.
+Version 3.1 targets Phoenix 1.8 WebSockets using transport protocol 2.0.0 and
+the default `ArrayBuffer` binary type. It does not support LongPoll or custom
+binary types. The serializer requirement `"~> 2.0.0"` in the socket
+configuration selects Phoenix's transport protocol; it is independent of this
+package's version.
 
 ## Security Concerns
 
@@ -112,9 +116,9 @@ payloads with `:erlang.term_to_binary/2`, and the browser decodes them with the
 JavaScript `decode` function.
 
 Client-to-server messages use Phoenix's JSON and binary frame formats, decoded
-by `Phoenix.Socket.V2.JSONSerializer`. Do not configure clients to send BERT
-terms back to the server, and do not add server-side `binary_to_term` decoding
-for untrusted websocket input.
+by Phoenix's V2 JSON serializer. Do not configure clients to send BERT terms
+back to the server, and do not add server-side `binary_to_term` decoding for
+untrusted websocket input.
 
 ## Contributing
 

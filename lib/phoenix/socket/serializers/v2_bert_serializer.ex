@@ -8,8 +8,12 @@ defmodule Phoenix.Socket.V2.BERTSerializer do
   Server payloads may contain floats, JavaScript-safe integers, UTF-8 binaries,
   small UTF-8 atoms, proper lists, byte lists, small tuples, and maps with atom,
   UTF-8 binary, or integer keys. Keys that become the same JavaScript property
-  name, such as `:a` and `"a"`, overwrite each other. Binary replies and other
-  Erlang terms are not supported.
+  name, such as `:a` and `"a"`, overwrite each other. Other Erlang terms are not
+  supported.
+
+  `{:binary, data}` pushes, replies, and broadcasts use Phoenix's binary frame
+  format with any bytes. The JavaScript decoder returns their data as an
+  `ArrayBuffer`, like Phoenix's own serializer.
 
   Frames larger than 2 MiB raise `ArgumentError`. The JavaScript decoder also
   rejects frames with more than 262,144 terms, 65,536 elements per collection,
@@ -64,10 +68,22 @@ defmodule Phoenix.Socket.V2.BERTSerializer do
 
   alias Phoenix.Socket.{Broadcast, Message, Reply, V2.JSONSerializer}
 
+  @max_bytes 2_097_152
+
   @impl true
   defdelegate decode!(raw_message, opts), to: JSONSerializer
 
   @impl true
+  def encode!(%Message{payload: {:binary, data}} = msg) when byte_size(data) <= @max_bytes do
+    validate!({msg.join_ref, msg.ref, msg.topic, msg.event})
+    msg |> JSONSerializer.encode!() |> binary()
+  end
+
+  def encode!(%Reply{payload: {:binary, data}} = reply) when byte_size(data) <= @max_bytes do
+    validate!({reply.join_ref, reply.ref, reply.topic, reply.status})
+    reply |> JSONSerializer.encode!() |> binary()
+  end
+
   def encode!(%Message{payload: %{}} = msg) do
     serialize({msg.join_ref, msg.ref, msg.topic, msg.event, msg.payload})
   end
@@ -79,12 +95,22 @@ defmodule Phoenix.Socket.V2.BERTSerializer do
     )
   end
 
+  def encode!(_), do: invalid!()
+
   @impl true
+  def fastlane!(%Broadcast{payload: {:binary, data}} = msg) when byte_size(data) <= @max_bytes do
+    validate!({msg.topic, msg.event})
+    msg |> JSONSerializer.fastlane!() |> binary()
+  end
+
   def fastlane!(%Broadcast{payload: %{}} = msg) do
     serialize({nil, nil, msg.topic, msg.event, msg.payload})
   end
 
-  @max_bytes 2_097_152
+  def fastlane!(_), do: invalid!()
+
+  defp binary({:socket_push, :binary, frame} = push) when byte_size(frame) <= @max_bytes, do: push
+  defp binary(_), do: invalid!()
 
   defp serialize({join_ref, ref, topic, event, payload} = message)
        when (is_nil(join_ref) or is_binary(join_ref)) and
@@ -178,6 +204,6 @@ defmodule Phoenix.Socket.V2.BERTSerializer do
 
   defp invalid! do
     raise ArgumentError,
-          "Invalid BERT message: expected bounded UTF-8 strings, safe numbers, atoms, proper lists, small tuples and plain maps"
+          "Invalid BERT message: expected bounded UTF-8 strings, safe numbers, atoms, proper lists, small tuples and plain maps, or {:binary, data}, in a frame of at most 2 MiB"
   end
 end
