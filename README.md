@@ -11,7 +11,7 @@ Add `phoenix_socket_bert` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:phoenix_socket_bert, "~> 3.0"}
+    {:phoenix_socket_bert, "~> 3.1"}
   ]
 end
 ```
@@ -25,14 +25,12 @@ Set the `:serializer` option in your `Phoenix.Socket` configuration:
 ```elixir
 socket "/live", Phoenix.LiveView.Socket,
   websocket: [
-    compress: true,
     connect_info: [session: @session_options],
     serializer: [{Phoenix.Socket.V2.BERTSerializer, "~> 2.0.0"}]
   ]
 
-socket "/socket", Phoenix.Socket,
+socket "/socket", MyAppWeb.UserSocket,
   websocket: [
-    compress: true,
     serializer: [{Phoenix.Socket.V2.BERTSerializer, "~> 2.0.0"}]
   ]
 ```
@@ -68,14 +66,17 @@ socket.connect();
 ## Wire format
 
 Server messages with map payloads are five-element ETF tuples containing
-`join_ref`, `ref`, `topic`, `event`, and `payload`. The JavaScript decoder
-accepts `ArrayBuffer` messages and typed array views using this format.
+`join_ref`, `ref`, `topic`, `event`, and `payload`. Refs are strings or `nil`,
+as Phoenix's JavaScript client sends them; the topic and event are strings. The
+JavaScript decoder accepts `ArrayBuffer` messages and typed array views using
+this format.
 
 Payloads may contain floats, JavaScript-safe integers, UTF-8 binaries, small
 UTF-8 atoms, proper lists, byte lists, tuples with at most 255 elements, and
 maps with atom, UTF-8 binary, or integer keys. Keys that become the same
-JavaScript property name, such as `:a` and `"a"`, overwrite each other.
-Bitstrings, improper lists, and other Erlang terms are not supported.
+JavaScript property name, such as `:a` and `"a"`, are not supported: the decoder
+keeps the last one and validation rejects them. Bitstrings, improper lists, and
+other Erlang terms are not supported.
 
 `{:binary, data}` pushes, replies, and broadcasts use Phoenix's binary frame
 format and may carry any bytes; their topic, event, and refs must be UTF-8. The
@@ -84,20 +85,26 @@ decoder returns their data as an `ArrayBuffer` (for replies, in
 
 Frames are limited to 2 MiB, 262,144 terms, 65,536 elements per collection,
 and nesting depth 64. The serializer raises `ArgumentError` for frames larger
-than 2 MiB, and the decoder rejects frames outside these rules. Pass an optional
-third `onError` argument to `decode` to handle parsing failures; exceptions from
-the message callback still propagate.
+than 2 MiB, and the decoder rejects frames outside these rules. Broadcasts are
+encoded during PubSub dispatch for each node's subscribers, so an oversized
+broadcast raises in the broadcasting process for local subscribers and in the
+PubSub worker on other nodes; check broadcast sizes before publishing. Pass an
+optional third `onError` argument to `decode` to handle parsing failures;
+exceptions from the message callback still propagate.
 
 To check every payload on the server before encoding, enable validation at
 compile time, typically in development and test. It traverses each payload and
-raises `ArgumentError` for terms outside these rules:
+raises `ArgumentError` for terms outside these rules, including structs:
 
 ```elixir
 config :phoenix_socket_bert, validate: true
 ```
 
-Enable `compress: true` on the socket: per-message deflate typically reduces
-LiveView frames several times.
+Per-message deflate (`compress: true` in the socket's `websocket` options)
+typically reduces LiveView frames several times. Enable it only on sockets that
+never carry both secrets and text an attacker controls: messages on one socket
+can share a compression context, and compressed lengths can reveal such secrets
+even over TLS.
 
 ## Compatibility
 
@@ -114,6 +121,10 @@ should never be accepted from an untrusted client. For that reason this package
 uses BERT only for server-to-client messages: Phoenix encodes outbound map
 payloads with `:erlang.term_to_binary/2`, and the browser decodes them with the
 JavaScript `decode` function.
+
+`term_to_binary/2` encodes every field of a struct and ignores `Jason.Encoder`
+field lists, so a struct that was filtered for JSON sends all its fields. Push
+plain maps with explicitly selected fields; validation rejects structs.
 
 Client-to-server messages use Phoenix's JSON and binary frame formats, decoded
 by Phoenix's V2 JSON serializer. Do not configure clients to send BERT terms

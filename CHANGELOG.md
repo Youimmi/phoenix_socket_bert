@@ -1,5 +1,22 @@
 # Changelog
 
+## 3.1.1 (2026-11-18)
+
+### Bug fixes
+
+- Reject atoms, collections, and other non-string values in the `join_ref`, `ref`, `topic`, and `event` fields, and non-map payloads, in the JavaScript decoder before decoding them
+- Reserve the term budget when a collection is allocated, so a malformed frame cannot allocate more slots than the 262,144-term limit in the JavaScript decoder
+- Accept plain maps with a `__struct__` key under `validate: true`; only structs are rejected
+- Require Phoenix, which the serializer always uses, instead of declaring it optional
+- Document that refs must be strings or `nil`, that keys that become the same JavaScript property name are unsupported, that structs are encoded with all their fields, where oversized broadcasts raise, and when per-message compression is safe
+
+### Enhancements
+
+- Encode map payloads in a single pass and check the 2 MiB limit on the encoded frame; an oversized frame is now rejected after encoding
+- Skip building validation terms for `{:binary, data}` frames when validation is disabled
+- Validate atoms, map keys, and integers with fewer conversions and scans
+- Share scalar decoding between map keys and values in the JavaScript decoder
+
 ## 3.1.0 (2026-11-17)
 
 ### Enhancements
